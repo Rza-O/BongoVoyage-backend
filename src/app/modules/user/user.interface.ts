@@ -22,7 +22,7 @@ export interface IUser {
  * google auth
  */
 export interface IAuthProvider {
-	provider: string; //google, facebook, etc.
+	provider: "google" | "credentials"; //google, facebook, etc.
 	providerId: string;
 }
 
