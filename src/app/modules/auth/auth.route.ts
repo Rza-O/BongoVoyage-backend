@@ -5,11 +5,13 @@ import { Role } from "../user/user.interface";
 import passport from "passport";
 
 const router = Router();
-
+// manual credentials login
 router.post("/login", AuthControllers.credentialsLogin);
 router.post("/refresh-token", AuthControllers.getNewAccessToken);
 router.post("/logout", AuthControllers.logout);
 router.post("/reset-password", checkAuth(...Object.values(Role)), AuthControllers.resetPassword);
+
+// Passport JS google login
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 router.get("/google", async (req: Request, res: Response, next: NextFunction) => {
 	const redirect = req.query.redirect || "/";

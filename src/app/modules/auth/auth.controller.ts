@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
@@ -9,10 +10,43 @@ import { setAuthCookie } from "../../utils/setCookie";
 import { JwtPayload } from "jsonwebtoken";
 import { createUserTokens } from "../../utils/userTokens";
 import { envVars } from "../../config/env";
+import passport from "passport";
 
 const credentialsLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-	const loginInfo = await AuthServices.credentialsLogin(req.body);
+	passport.authenticate("local", async (err: any, user: any, info: any) => {
+		if (err) {
+			// way 1
+			// return next(err);
+			// way 2 (this structure the error message)
+			return next(new AppError(401, err));
+		}
 
+		if (!user) {
+			return next(new AppError(401, info.message));
+		}
+
+		const usersToken = createUserTokens(user);
+
+		delete user.toObject().password;
+
+		setAuthCookie(res, usersToken);
+
+		sendResponse(res, {
+			statusCode: httpStatus.ACCEPTED,
+			success: true,
+			message: "User login Successfully!!",
+			data: {
+				accessToken: usersToken.accessToken,
+				refreshToken: usersToken.refreshToken,
+				user,
+			},
+		});
+	})(req, res, next);
+
+	// Manual login
+	// const loginInfo = await AuthServices.credentialsLogin(req.body);
+
+	// before
 	// res.cookie("accessToken", loginInfo.accessToken, {
 	// 	httpOnly: true,
 	// 	secure: false,
@@ -23,14 +57,15 @@ const credentialsLogin = catchAsync(async (req: Request, res: Response, next: Ne
 	// 	secure: false,
 	// });
 
-	setAuthCookie(res, loginInfo);
+	// after
+	// setAuthCookie(res, loginInfo);
 
-	sendResponse(res, {
-		statusCode: httpStatus.ACCEPTED,
-		success: true,
-		message: "User login Successfully!!",
-		data: loginInfo,
-	});
+	// sendResponse(res, {
+	// 	statusCode: httpStatus.ACCEPTED,
+	// 	success: true,
+	// 	message: "User login Successfully!!",
+	// 	data: loginInfo,
+	// });
 });
 
 const getNewAccessToken = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
